@@ -1,12 +1,14 @@
 # Selfdestruct Analysis 3
 
-This repo contains tools to build the dataset used in the [third selfdestruct analysis](linky).
+This repository contains tools to build the dataset summarized in the [third selfdestruct removal analysis](https://hackmd.io/X-waAY49SrW9i36SKOVuGQ).
 
 ## Usage
 
-### Build and Download the Datasets
+### Download the Datasets
 
-###### All Contracts
+Each raw dataset should be retrieved using BigQuery, exported to a GCS bucket with the naming format `data-*.csv` and downloaded to the specified folder:
+
+##### All Ethereum Contracts (Past and Present)
 
 Query:
 ```
@@ -15,7 +17,7 @@ SELECT address, bytecode, block_number, block_hash FROM `bigquery-public-data.cr
 
 Dataset goes into `all-contracts` folder.
 
-###### Recent Execution Traces
+##### Recent Execution Traces
 
 Query:
 ```
@@ -26,20 +28,22 @@ select block_hash, transaction_hash,  trace_id, block_number, transaction_index,
 
 Dataset goes into `full-recent-traces` folder.
 
-###### Balances for All Existing Contracts with Nonzero Balance
+##### Balances for All Existing Contracts with Nonzero Balance
 
 Query:
 ```
 select distinct `bigquery-public-data.crypto_ethereum.balances`.address, eth_balance from `bigquery-public-data.crypto_ethereum.balances` join `bigquery-public-data.crypto_ethereum.contracts` on (`bigquery-public-data.crypto_ethereum.balances`.address = `bigquery-public-data.crypto_ethereum.contracts`.address) where `bigquery-public-data.crypto_ethereum.contracts`.address is not null and `bigquery-public-data.crypto_ethereum.balances`.eth_balance != 0 order by address;
 ```
 
-from the top-level project directory run `rename-files.py`.
+Dataset goes into the `ethereum-account-balances` folder
 
 ### Run the Analysis
 
 ```
+> python3 rename-files.py
 > python3 analyze.py
 > python3 create_all_contracts_db.py
+> python3 trace_frequency.py
 ```
 
 The analysis scripts produce a Sqlite dataset at `all_contracts_filtered2.db`.
