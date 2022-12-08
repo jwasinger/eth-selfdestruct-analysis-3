@@ -186,7 +186,73 @@ select count(distinct creator) from contracts
 	and isSelfdestructable = true;
 ```
 
+##### number of non-zero balance create2-containing creators that have selfdestructable children at previously-reinited addresses
+```
+select count(*) from contracts 
+	left join accounts_balances on (accounts_balances.address = contracts.address)
+        where contracts.address in (
+		select distinct(contracts.creator) from contracts 
+			     left join codeHashes on (contracts.code_hash = codeHashes.code_hash)
+			     left join prev_reinited on (contracts.address = prev_reinited.address)
+				   where codeHashes.code_hash IS NOT NULL
+                                   and prev_reinited.address is not null
+				   and isSelfdestructable=true
+				   and creator in (select contracts.address from contracts join codeHashes on (contracts.code_hash = codeHashes.code_hash) where hasCreate2Op=true))
+	and accounts_balances.balance is not null
+        and contracts.address is not null
+	order by accounts_balances.balance desc limit 10;
+```
+
 ##### Top create2-containing creators that have selfdestructable children at previously-reinited addresses (balance ranked)
+```
+select contracts.address, accounts_balances.balance from contracts 
+	left join accounts_balances on (accounts_balances.address = contracts.address)
+        where contracts.address in (
+		select distinct(contracts.creator) from contracts 
+			     left join codeHashes on (contracts.code_hash = codeHashes.code_hash)
+			     left join prev_reinited on (contracts.address = prev_reinited.address)
+				   where codeHashes.code_hash IS NOT NULL
+                                   and prev_reinited.address is not null
+				   and isSelfdestructable=true
+				   and creator in (select contracts.address from contracts join codeHashes on (contracts.code_hash = codeHashes.code_hash) where hasCreate2Op=true))
+	and accounts_balances.balance is not null
+        and contracts.address is not null
+	order by accounts_balances.balance desc limit 10;
+```
+
+##### count of create2-containing creators with recent activity that have selfdestructable children at previously-reinited addresses
+```
+select count(*) from contracts
+	left join address_traces on (address_traces.address = contracts.address)
+        where contracts.address in (
+		select distinct(contracts.creator) from contracts 
+			     left join codeHashes on (contracts.code_hash = codeHashes.code_hash)
+			     left join prev_reinited on (contracts.address = prev_reinited.address)
+				   where codeHashes.code_hash IS NOT NULL
+                                   and prev_reinited.address is not null
+				   and isSelfdestructable=true
+				   and creator in (select contracts.address from contracts join codeHashes on (contracts.code_hash = codeHashes.code_hash) where hasCreate2Op=true))
+	and address_traces.count is not null
+        and contracts.address is not null;
+```
+
+##### top create2-containing creators with recent activity that have selfdestructable children at previously-reinited addresses
+
+```
+select contracts.address, address_traces.count from contracts
+	left join address_traces on (address_traces.address = contracts.address)
+        where contracts.address in (
+		select distinct(contracts.creator) from contracts 
+			     left join codeHashes on (contracts.code_hash = codeHashes.code_hash)
+			     left join prev_reinited on (contracts.address = prev_reinited.address)
+				   where codeHashes.code_hash IS NOT NULL
+                                   and prev_reinited.address is not null
+				   and isSelfdestructable=true
+				   and creator in (select contracts.address from contracts join codeHashes on (contracts.code_hash = codeHashes.code_hash) where hasCreate2Op=true))
+	and address_traces.count is not null
+        and contracts.address is not null
+	order by address_traces.count desc limit 10;
+```
 
 ##### Count of alive previously-reinited addresses
 ```
